@@ -1,94 +1,213 @@
-/* ========================================================================
- * Bootstrap: alert.js v3.3.1
+/** =======================================================================
+ * Bootstrap: alert.js v4.0.0
  * http://getbootstrap.com/javascript/#alerts
  * ========================================================================
  * Copyright 2011-2014 Twitter, Inc.
  * Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE)
- * ======================================================================== */
+ * ========================================================================
+ * @fileoverview - Bootstrap's generic alert component. Add dismiss
+ * functionality to all alert messages with this plugin.
+ * ========================================================================
+ */
 
 
-+function ($) {
-  'use strict';
+'use strict';
 
-  // ALERT CLASS DEFINITION
-  // ======================
 
-  var dismiss = '[data-dismiss="alert"]'
-  var Alert   = function (el) {
-    $(el).on('click', dismiss, this.close)
+/**
+ * Our Alert class.
+ * @param {Element=} opt_element
+ * @constructor
+ */
+var Alert = function (opt_element) {
+  if (opt_element) {
+    $(opt_element).on('click', Alert.DISMISS_SELECTOR, Alert.HANDLE_DISMISS(this))
   }
+}
 
-  Alert.VERSION = '3.3.1'
 
-  Alert.TRANSITION_DURATION = 150
+/**
+ * @const
+ * @type {string}
+ */
+Alert.VERSION = '4.0.0'
 
-  Alert.prototype.close = function (e) {
-    var $this    = $(this)
-    var selector = $this.attr('data-target')
 
-    if (!selector) {
-      selector = $this.attr('href')
-      selector = selector && selector.replace(/.*(?=#[^\s]*$)/, '') // strip for ie7
+/**
+ * @const
+ * @type {string}
+ */
+Alert.DISMISS_SELECTOR = '[data-dismiss="alert"]'
+
+
+/**
+ * @const
+ * @type {number}
+ */
+Alert.TRANSITION_DURATION = 150
+
+
+/**
+ * @const
+ * @type {Function}
+ */
+Alert.JQUERY_NO_CONFLICT = $.fn['alert']
+
+
+/**
+ * Provides the jquery interface for the alert component.
+ * @param {string=} opt_config
+ * @this {jQuery}
+ * @return {jQuery}
+ */
+Alert.JQUERY_INTERFACE = function (opt_config) {
+  return this.each(/** @this {Element} */ (function () {
+    var $this = $(this)
+
+    var data  = $this.data('bs.alert')
+
+    if (!data) {
+      data = new Alert(this)
+      $this.data('bs.alert', data)
     }
 
-    var $parent = $(selector)
+    if (opt_config == 'close') {
+      data.close.call(data, this)
+    }
+  }))
+}
 
-    if (e) e.preventDefault()
 
-    if (!$parent.length) {
-      $parent = $this.closest('.alert')
+/**
+ * Close the alert component
+ * @param {Alert} alertInstance
+ * @return {Function}
+ */
+Alert.HANDLE_DISMISS = function (alertInstance) {
+  return function (event) {
+    if (event) {
+      event.preventDefault()
     }
 
-    $parent.trigger(e = $.Event('close.bs.alert'))
+    alertInstance.close(this)
+  }
+}
 
-    if (e.isDefaultPrevented()) return
 
-    $parent.removeClass('in')
+/**
+ * Close the alert component
+ * @param {Element} element
+ */
+Alert.prototype.close = function (element) {
+  var rootElement = this._getRootElement(element)
+  var customEvent = this._triggerCloseEvent(rootElement)
 
-    function removeElement() {
-      // detach from parent, fire event then clean up data
-      $parent.detach().trigger('closed.bs.alert').remove()
-    }
+  if (customEvent.isDefaultPrevented()) return
 
-    $.support.transition && $parent.hasClass('fade') ?
-      $parent
-        .one('bsTransitionEnd', removeElement)
-        .emulateTransitionEnd(Alert.TRANSITION_DURATION) :
-      removeElement()
+  this._removeElement(rootElement)
+}
+
+
+/**
+ * Tries to get the alert's root element
+ * @return {Element}
+ * @private
+ */
+Alert.prototype._getRootElement = function (element) {
+  var parent = false
+  var target = element.getAttribute('data-target')
+
+  if (!target) {
+    target = element.getAttribute('href')
   }
 
-
-  // ALERT PLUGIN DEFINITION
-  // =======================
-
-  function Plugin(option) {
-    return this.each(function () {
-      var $this = $(this)
-      var data  = $this.data('bs.alert')
-
-      if (!data) $this.data('bs.alert', (data = new Alert(this)))
-      if (typeof option == 'string') data[option].call($this)
-    })
+  if (target && /\w/.test(target)) {
+    parent = document.querySelector(target)
   }
 
-  var old = $.fn.alert
-
-  $.fn.alert             = Plugin
-  $.fn.alert.Constructor = Alert
-
-
-  // ALERT NO CONFLICT
-  // =================
-
-  $.fn.alert.noConflict = function () {
-    $.fn.alert = old
-    return this
+  if (!parent) {
+    parent = $(element).closest('.alert')[0]
   }
 
+  return parent
+}
 
-  // ALERT DATA-API
-  // ==============
 
-  $(document).on('click.bs.alert.data-api', dismiss, Alert.prototype.close)
+/**
+ * Trigger close event on element
+ * @return {$.Event}
+ * @private
+ */
+Alert.prototype._triggerCloseEvent = function (element) {
+  var closeEvent = $.Event('close.bs.alert')
+  $(element).trigger(closeEvent)
+  return closeEvent
+}
 
-}(jQuery);
+
+/**
+ * Trigger closed event and remove element from dom
+ * @private
+ */
+Alert.prototype._removeElement = function (element) {
+  element.classList.remove('in')
+
+  if (!$['bootstrap']['transition'] || !element.classList.contains('fade')) {
+    this._destroyElement(element)
+    return
+  }
+
+  $(element)
+    .one('bsTransitionEnd', this._destroyElement.bind(this, element))
+    .emulateTransitionEnd(Alert.TRANSITION_DURATION)
+}
+
+
+/**
+ * clean up any lingering jquery data and kill element
+ * @private
+ */
+Alert.prototype._destroyElement = function (element) {
+  $(element)
+    .detach()
+    .trigger('closed.bs.alert')
+    .remove()
+}
+
+
+/**
+ * ------------------------------------------------------------------------
+ * Jquery Interface + noConflict implementaiton
+ * ------------------------------------------------------------------------
+ */
+
+/**
+ * @const
+ * @type {Function}
+ */
+$.fn['alert'] = Alert.JQUERY_INTERFACE
+
+
+/**
+ * @const
+ * @type {Function}
+ */
+$.fn['alert']['Constructor'] = Alert
+
+
+/**
+ * @return {Function}
+ */
+$.fn['alert']['noConflict'] = function () {
+  $.fn['alert'] = Alert.JQUERY_NO_CONFLICT
+  return Alert.JQUERY_INTERFACE
+}
+
+
+/**
+ * ------------------------------------------------------------------------
+ * Data Api implementation
+ * ------------------------------------------------------------------------
+ */
+
+$(document).on('click.bs.alert.data-api', Alert.DISMISS_SELECTOR, Alert.HANDLE_DISMISS(new Alert))

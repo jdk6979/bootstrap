@@ -29,61 +29,6 @@ $(function () {
     strictEqual($button[0], $el[0], 'collection contains element')
   })
 
-  test('should return set state to loading', function () {
-    var $btn = $('<button class="btn" data-loading-text="fat">mdo</button>')
-    equal($btn.html(), 'mdo', 'btn text equals mdo')
-    $btn.bootstrapButton('loading')
-    stop()
-    setTimeout(function () {
-      equal($btn.html(), 'fat', 'btn text equals fat')
-      ok($btn[0].hasAttribute('disabled'), 'btn is disabled')
-      ok($btn.hasClass('disabled'), 'btn has disabled class')
-      start()
-    }, 0)
-  })
-
-  test('should return reset state', function () {
-    var $btn = $('<button class="btn" data-loading-text="fat">mdo</button>')
-    equal($btn.html(), 'mdo', 'btn text equals mdo')
-    $btn.bootstrapButton('loading')
-    stop()
-    setTimeout(function () {
-      equal($btn.html(), 'fat', 'btn text equals fat')
-      ok($btn[0].hasAttribute('disabled'), 'btn is disabled')
-      ok($btn.hasClass('disabled'), 'btn has disabled class')
-      start()
-      stop()
-      $btn.bootstrapButton('reset')
-      setTimeout(function () {
-        equal($btn.html(), 'mdo', 'btn text equals mdo')
-        ok(!$btn[0].hasAttribute('disabled'), 'btn is not disabled')
-        ok(!$btn.hasClass('disabled'), 'btn does not have disabled class')
-        start()
-      }, 0)
-    }, 0)
-  })
-
-  test('should work with an empty string as reset state', function () {
-    var $btn = $('<button class="btn" data-loading-text="fat"/>')
-    equal($btn.html(), '', 'btn text equals ""')
-    $btn.bootstrapButton('loading')
-    stop()
-    setTimeout(function () {
-      equal($btn.html(), 'fat', 'btn text equals fat')
-      ok($btn[0].hasAttribute('disabled'), 'btn is disabled')
-      ok($btn.hasClass('disabled'), 'btn has disabled class')
-      start()
-      stop()
-      $btn.bootstrapButton('reset')
-      setTimeout(function () {
-        equal($btn.html(), '', 'btn text equals ""')
-        ok(!$btn[0].hasAttribute('disabled'), 'btn is not disabled')
-        ok(!$btn.hasClass('disabled'), 'btn does not have disabled class')
-        start()
-      }, 0)
-    }, 0)
-  })
-
   test('should toggle active', function () {
     var $btn = $('<button class="btn" data-toggle="button">mdo</button>')
     ok(!$btn.hasClass('active'), 'btn does not have active class')
@@ -153,13 +98,16 @@ $(function () {
     ok($btn1.find('input').prop('checked'), 'btn1 is checked')
     ok(!$btn2.hasClass('active'), 'btn2 does not have active class')
     ok(!$btn2.find('input').prop('checked'), 'btn2 is not checked')
+
     $btn2.find('input').click()
+
     ok(!$btn1.hasClass('active'), 'btn1 does not have active class')
-    ok(!$btn1.find('input').prop('checked'), 'btn1 is checked')
+    ok(!$btn1.find('input').prop('checked'), 'btn1 is not checked')
     ok($btn2.hasClass('active'), 'btn2 has active class')
     ok($btn2.find('input').prop('checked'), 'btn2 is checked')
 
     $btn2.find('input').click() // clicking an already checked radio should not un-check it
+
     ok(!$btn1.hasClass('active'), 'btn1 does not have active class')
     ok(!$btn1.find('input').prop('checked'), 'btn1 is checked')
     ok($btn2.hasClass('active'), 'btn2 has active class')

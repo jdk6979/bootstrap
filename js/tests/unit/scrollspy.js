@@ -121,6 +121,7 @@ $(function () {
       + '</div>'
 
     $(navbarHtml).appendTo('#qunit-fixture')
+
     var $content = $(contentHtml)
       .appendTo('#qunit-fixture')
       .bootstrapScrollspy({ offset: 0, target: '.navbar' })

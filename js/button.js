@@ -1,116 +1,152 @@
-/* ========================================================================
- * Bootstrap: button.js v3.3.1
+/** =======================================================================
+ * Bootstrap: button.js v4.0.0
  * http://getbootstrap.com/javascript/#buttons
  * ========================================================================
  * Copyright 2011-2014 Twitter, Inc.
  * Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE)
- * ======================================================================== */
+ * ========================================================================
+ * @fileoverview - Bootstrap's generic button component.
+ *
+ * Note (@fat): Deprecated "setState" – imo, better solutions for managing a
+ * buttons state should exist outside this plugin.
+ * ========================================================================
+ */
+
+'use strict';
 
 
-+function ($) {
-  'use strict';
+/**
+ * Our Button class.
+ * @param {Element!} element
+ * @constructor
+ */
+var Button = function (element) {
 
-  // BUTTON PUBLIC CLASS DEFINITION
-  // ==============================
+  /** @private {Element} */
+  this._element = element
 
-  var Button = function (element, options) {
-    this.$element  = $(element)
-    this.options   = $.extend({}, Button.DEFAULTS, options)
-    this.isLoading = false
-  }
+}
 
-  Button.VERSION  = '3.3.1'
 
-  Button.DEFAULTS = {
-    loadingText: 'loading...'
-  }
+/**
+ * @const
+ * @type {string}
+ */
+Button.VERSION  = '4.0.0'
 
-  Button.prototype.setState = function (state) {
-    var d    = 'disabled'
-    var $el  = this.$element
-    var val  = $el.is('input') ? 'val' : 'html'
-    var data = $el.data()
 
-    state = state + 'Text'
+/**
+ * @const
+ * @type {Function}
+ */
+Button.JQUERY_NO_CONFLICT = $.fn.button
 
-    if (data.resetText == null) $el.data('resetText', $el[val]())
 
-    // push to event loop to allow forms to submit
-    setTimeout($.proxy(function () {
-      $el[val](data[state] == null ? this.options[state] : data[state])
+/**
+ * Provides the jquery interface for the Button component.
+ * @this {jQuery}
+ * @return {jQuery}
+ */
+Button.JQUERY_INTERFACE = function (option) {
+  return this.each(function () {
+    var $this = $(this)
+    var data  = $this.data('bs.button')
 
-      if (state == 'loadingText') {
-        this.isLoading = true
-        $el.addClass(d).attr(d, d)
-      } else if (this.isLoading) {
-        this.isLoading = false
-        $el.removeClass(d).removeAttr(d)
-      }
-    }, this), 0)
-  }
-
-  Button.prototype.toggle = function () {
-    var changed = true
-    var $parent = this.$element.closest('[data-toggle="buttons"]')
-
-    if ($parent.length) {
-      var $input = this.$element.find('input')
-      if ($input.prop('type') == 'radio') {
-        if ($input.prop('checked') && this.$element.hasClass('active')) changed = false
-        else $parent.find('.active').removeClass('active')
-      }
-      if (changed) $input.prop('checked', !this.$element.hasClass('active')).trigger('change')
-    } else {
-      this.$element.attr('aria-pressed', !this.$element.hasClass('active'))
+    if (!data) {
+      data = new Button(this)
+      $this.data('bs.button', data)
     }
 
-    if (changed) this.$element.toggleClass('active')
+    if (option == 'toggle') {
+      data.toggle()
+    }
+  })
+}
+
+
+/**
+ * Toggle's the button active state
+ */
+Button.prototype.toggle = function () {
+  var triggerChangeEvent = true
+  var rootElement = $(this._element).closest('[data-toggle="buttons"]')[0]
+
+  if (rootElement) {
+    var input = this._element.querySelector('input')
+    if (input) {
+      if (input.type == 'radio') {
+        if (input.checked && this._element.classList.contains('active')) {
+          triggerChangeEvent = false
+        } else {
+          var activeElement = rootElement.querySelector('.active')
+          if (activeElement) activeElement.classList.remove('active')
+        }
+      }
+
+      if (triggerChangeEvent) {
+        input.checked = !this._element.classList.contains('active')
+        $(this._element).trigger('change')
+      }
+    }
+  } else {
+    this._element.setAttribute('aria-pressed', !this._element.classList.contains('active'))
   }
 
-
-  // BUTTON PLUGIN DEFINITION
-  // ========================
-
-  function Plugin(option) {
-    return this.each(function () {
-      var $this   = $(this)
-      var data    = $this.data('bs.button')
-      var options = typeof option == 'object' && option
-
-      if (!data) $this.data('bs.button', (data = new Button(this, options)))
-
-      if (option == 'toggle') data.toggle()
-      else if (option) data.setState(option)
-    })
+  if (triggerChangeEvent) {
+    this._element.classList.toggle('active')
   }
-
-  var old = $.fn.button
-
-  $.fn.button             = Plugin
-  $.fn.button.Constructor = Button
+}
 
 
-  // BUTTON NO CONFLICT
-  // ==================
+/**
+ * ------------------------------------------------------------------------
+ * Jquery Interface + noConflict implementaiton
+ * ------------------------------------------------------------------------
+ */
 
-  $.fn.button.noConflict = function () {
-    $.fn.button = old
-    return this
-  }
+/**
+ * @const
+ * @type {Function}
+ */
+$.fn['button'] = Button.JQUERY_INTERFACE
 
 
-  // BUTTON DATA-API
-  // ===============
+/**
+ * @const
+ * @type {Function}
+ */
+$.fn['button']['Constructor'] = Button
 
-  $(document)
-    .on('click.bs.button.data-api', '[data-toggle^="button"]', function (e) {
-      var $btn = $(e.target)
-      if (!$btn.hasClass('btn')) $btn = $btn.closest('.btn')
-      Plugin.call($btn, 'toggle')
-      e.preventDefault()
-    })
-    .on('focus.bs.button.data-api blur.bs.button.data-api', '[data-toggle^="button"]', function (e) {
-      $(e.target).closest('.btn').toggleClass('focus', /^focus(in)?$/.test(e.type))
-    })
 
-}(jQuery);
+/**
+ * @const
+ * @type {Function}
+ */
+$.fn['button']['noConflict'] = function () {
+  $.fn.button = Button.JQUERY_NO_CONFLICT
+  return this
+}
+
+
+/**
+ * ------------------------------------------------------------------------
+ * Data Api implementation
+ * ------------------------------------------------------------------------
+ */
+
+$(document)
+  .on('click.bs.button.data-api', '[data-toggle^="button"]', function (event) {
+    event.preventDefault()
+
+    var button = event.target
+
+    if (!button.classList.contains('btn')) {
+      button = $(button).closest('.btn')
+    }
+
+    Button.JQUERY_INTERFACE.call(button, 'toggle')
+  })
+  .on('focus.bs.button.data-api blur.bs.button.data-api', '[data-toggle^="button"]', function (event) {
+    var button = $(event.target).closest('.btn')[0]
+    button.classList.toggle('focus', /^focus(in)?$/.test(event.type))
+  })

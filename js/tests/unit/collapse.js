@@ -288,7 +288,7 @@ $(function () {
 
     $body2
       .toggleClass('in collapsing')
-      .data('bs.collapse').transitioning = 1
+      .data('bs.collapse')._isTransitioning = true
 
     $target1.click()
 

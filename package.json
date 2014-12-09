@@ -58,7 +58,8 @@
     "load-grunt-tasks": "~1.0.0",
     "npm-shrinkwrap": "5.0.0",
     "remarkable": "~1.4.1",
-    "time-grunt": "~1.0.0"
+    "time-grunt": "~1.0.0",
+    "grunt-closure-tools": "^0.9.7"
   },
   "engines": {
     "node": "~0.10.1"
